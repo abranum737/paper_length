@@ -1,0 +1,96 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+import datetime
+import requests
+from requests import get
+from xml.etree import ElementTree
+from bs4 import BeautifulSoup
+import re
+
+#part of web scrubber
+headers = {"Accept-Language": "en-US, en;q=0.5"}
+
+
+#Go to pubmed search page for term 'nejm'
+url = 'https://pubmed.ncbi.nlm.nih.gov/?term=nejm&size=200'
+results = requests.get(url, headers=headers)
+
+soup = BeautifulSoup(results.text, "html.parser")
+
+
+#make empty variables for page_url:the pubmed page for article, count_list: list of all the total word counts for excel, url_list: list of all the URLs for excel
+page_url = []
+count_list = []
+url_list = []
+
+
+#find the url for each article page in pubmed, go to page, go to full text page, get word count
+for tag in soup.article.find_all_next('a', class_="docsum-title"):
+
+    page_url = "https://pubmed.ncbi.nlm.nih.gov" + tag['href']
+
+
+    #Go to article page in pubmed
+    results = requests.get(page_url, headers=headers)
+    soup = BeautifulSoup(results.text, "html.parser")
+
+    #one url breaks code, added try/except
+    try:
+        nejm_url = ()
+        nejm_url = soup.find('a', class_="id-link").get("href")
+
+        print(nejm_url)
+        
+    except:
+        print("00")
+
+    try:
+        #Go to article page for full text
+        results = requests.get(nejm_url, headers=headers)
+        soup = BeautifulSoup(results.text, "html.parser")
+
+        word_count = 0
+        text = ()
+        words = ()
+        url_list.append(str(nejm_url))
+        
+
+        for tag in soup.div.find_all_next('p', class_="f-body"):
+            tag.text
+
+            text = str(tag)
+            text = re.sub(r'\<[^<>]*\>', "", text)
+
+            words = text.split()
+            each_para = len(words)
+            word_count = word_count + len(words)
+
+            
+
+        print('Number of words in text file:', word_count)
+
+        count_list.append(word_count)
+
+
+#        article_text = ()
+#        article_text = soup.find('div', class_="o-article-body__collapsible-content").text
+#
+#        words = article_text.split()
+#        print('Number of words in text file :', len(words))
+    except:
+        print("0")
+
+print('done')
+
+print("Maximum element in the list is :", max(count_list))
+
+
+import csv
+d = {'Url': url_list, 'Wordcount': count_list}
+df = pd.DataFrame(data=d)
+df
+print(df)
+
+df.to_csv(r"C:\Users\branuma\PythonScripts\Practice\NEJM\NEJM_length.csv")
